@@ -16,11 +16,65 @@ namespace Plover.Scanning
         public readonly int EndLine = endLine;
         public readonly int EndColumn = endColumn;
         public readonly string Message = message;
+
+        public string VisualMessage(List<string> source)
+        {
+            // first get the lines between the start - 1 and end + 1
+            int initialLine = Math.Max(1, (StartLine - 1));
+            int lastLine = Math.Min(EndLine + 1, source.Count);
+            List<string> errorLines = source[(initialLine - 1)..(lastLine)];
+            // add line numbers to all of the lines
+            int maxLineNumberLength = lastLine.ToString().Length;
+            string separator = "| ";
+            for (int i = 0; i < errorLines.Count; i++)
+            {
+                int lineNumber = initialLine + i;
+                string lineNumberStr = lineNumber.ToString();
+                lineNumberStr = lineNumberStr.PadLeft(maxLineNumberLength);
+                errorLines[i] = lineNumberStr + separator + errorLines[i];
+            }
+
+            // next, add an underline for the selected part of the lines
+            List<char[]> underlineLines = new List<char[]>();
+            int numLines = EndLine - StartLine + 1;
+            int leftPad = maxLineNumberLength + separator.Length;
+            // make all of these lines have ~~~~~ under them, with the length of the respective line
+            for (int i = 0; i < numLines; i++)
+            {
+                underlineLines.Add(("".PadLeft(maxLineNumberLength, ' ') + separator + "".PadLeft(source[StartLine - 1 + i].Length + 1, '~')).ToCharArray());
+            }
+            // for the first line, replace '~' with ' ' up to startColumn
+            for (int i = 1; i < StartColumn; i++)
+            {
+                underlineLines[0][leftPad+i - 1] = ' ';
+            }
+            // for the last line, replace '~' with ' ' from after endColumn
+            for (int i = EndColumn + 1; i < source[EndLine - 1].Length + 2; i++)
+            {
+                underlineLines[^1][leftPad+i - 1] = ' ';
+            }
+            // additionally, add an error message line below the first error line
+            string error_message = "".PadLeft(maxLineNumberLength, ' ') + separator + "".PadLeft(StartColumn - 1, ' ')+ "^ " + Message;
+            int additionalLines = StartLine - initialLine;
+            // now insert the underlines after their respective lines
+            for (int i = numLines - 1; i >= 0; i--)
+            {
+                int index = additionalLines + i;
+                if(i == 0)
+                {
+                    errorLines.Insert(index+1, error_message);
+                }
+                errorLines.Insert(index+1, new string(underlineLines[i]));
+            }
+
+            return string.Join('\n', errorLines);
+        }
     }
 
     internal class Scanner
     {
         internal readonly string Source;
+        internal readonly List<string> Lines = new();
         internal readonly List<Token> Tokens = new List<Token>();
 
         int Start = 0;
@@ -47,7 +101,8 @@ namespace Plover.Scanning
                 Token token = ScanNextToken();
                 tokens.Add(token);
             }
-            tokens.Add(ScanNextToken()); //EOF
+            if (tokens[^1].Type != EOF)
+                tokens.Add(ScanNextToken()); //EOF
             return tokens;
         }
 
@@ -65,6 +120,11 @@ namespace Plover.Scanning
                     return possibleToken;
                 }
             }
+            if(Column != 1)
+            {
+                Lines.Add(Source[(Current - Column + 1)..(Current)]);
+            }
+            
             return new Token(EOF, "", Line, Column, Line, Column);
         }
 
@@ -140,7 +200,7 @@ namespace Plover.Scanning
                     if (IsDigit(c)) return Number();
                     else if (IsAlpha(c)) return SimpleIdentifier();
 
-                    ReportError($"Unexpected character '{c}'.");
+                    ReportError(StartLine, StartColumn, StartLine, StartColumn, $"Unexpected character '{c}'.");
                     return null;
             }
         }
@@ -169,20 +229,20 @@ namespace Plover.Scanning
                     if (Match('0')) { value = '\0'; continue; }
                     if (Match('"')) { value = '"'; continue; }
                     if (Match('`')) { value = '`'; continue; }
-                    ReportError(Line, Column, "Unescaped '\\'.");
+                    ReportError(Line, Column-1, "Unescaped '\\'.");
                 }
                 value = current;
             }
 
             if (!terminated)
             {
-                ReportError("Unterminated char literal.");
+                ReportError(StartLine, StartColumn, StartLine, StartColumn, "Unterminated char literal.");
                 return null;
             }
 
             if (length != 1)
             {
-                ReportError("Char literal can only be one character.");
+                ReportError(StartLine, StartColumn, Line, Column - 1, "Char literal can only be one character.");
                 return null;
             }
 
@@ -216,14 +276,14 @@ namespace Plover.Scanning
                     if (Match('0')) { builder.Append('\0'); continue; }
                     if (Match('"')) { builder.Append('"'); continue; }
                     if (Match('`')) { builder.Append('`'); continue; }
-                    ReportError(Line, Column, "Unescaped '\\'.");
+                    ReportError(Line, Column-1, "Unescaped '\\'.");
                 }
                 builder.Append(current);
             }
 
             if (!terminated)
             {
-                ReportError("Unterminated custom literal.");
+                ReportError(StartLine, StartColumn, StartLine, StartColumn, "Unterminated custom literal.");
                 return null;
             }
 
@@ -331,7 +391,7 @@ namespace Plover.Scanning
 
             if (!terminated)
             {
-                ReportError("Unterminated string.");
+                ReportError(StartLine, StartColumn, StartLine, StartColumn, "Unterminated string.");
                 return null;
             }
 
@@ -366,14 +426,14 @@ namespace Plover.Scanning
                     if (Match('0')) { builder.Append('\0'); continue; }
                     if (Match('"')) { builder.Append('"'); continue; }
                     if (Match('`')) { builder.Append('`'); continue; }
-                    ReportError(Line, Column, "Unescaped '\\'.");
+                    ReportError(Line, Column-1, "Unescaped '\\'.");
                 }
                 builder.Append(current);
             }
 
             if (!terminated)
             {
-                ReportError("Unterminated string.");
+                ReportError(StartLine, StartColumn, StartLine, StartColumn, "Unterminated string.");
                 return null;
             }
 
@@ -409,7 +469,7 @@ namespace Plover.Scanning
                 return;
             }
 
-            ReportError(Line, Column, message);
+            ReportError(message);
         }
 
         // returns current char and moves to next
@@ -418,7 +478,14 @@ namespace Plover.Scanning
         {
             char current = Source[Current++];
             Column++;
-            if (current == '\n') { Line++; Column = 1; }
+            if (current == '\n')
+            {
+                // add current line to lines
+                Lines.Add(Source[(Current-Column+1)..(Current-1)]);
+                // increment line and reset column
+                Line++;
+                Column = 1;
+            }
             return current;
         }
 
@@ -496,9 +563,13 @@ namespace Plover.Scanning
         {
             Errors.Add(new ScanError(startLine, startColumn, Line, Column, message));
         }
+            void ReportError(int startLine, int startColumn, int endLine, int endColumn, string message)
+            {
+                Errors.Add(new ScanError(startLine, startColumn, endLine, endColumn, message));
+            }
 
 
-        bool IsAtEnd() => Current >= Source.Length;
+            bool IsAtEnd() => Current >= Source.Length;
 
         bool IsDigit(char c) => char.IsDigit(c);
         bool IsMiddleDigit(char c) => char.IsDigit(c) || c == '_';
