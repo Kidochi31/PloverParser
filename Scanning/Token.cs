@@ -28,7 +28,7 @@ namespace Plover.Scanning
 
         public override string ToString()
         {
-            return $"{Type} '{Lexeme}' of type {Type}, found at [{StartLine}, {StartColumn}]";
+            return $"{Type} '{Lexeme}' of type {Type}, found at [{StartLine}:{StartColumn}, {EndLine}:{EndColumn}]";
         }
     }
 
@@ -38,8 +38,13 @@ namespace Plover.Scanning
         public readonly string IdentifierName = name;
     }
 
-    internal abstract class LiteralToken<T>(TokenType type, string lexeme, int startLine, int startColumn, int endLine, int endColumn, T value)
+    internal abstract class LiteralToken(TokenType type, string lexeme, int startLine, int startColumn, int endLine, int endColumn)
         : Token(type, lexeme, startLine, startColumn, endLine, endColumn)
+    {
+    }
+
+    internal abstract class LiteralToken<T>(TokenType type, string lexeme, int startLine, int startColumn, int endLine, int endColumn, T value)
+        : LiteralToken(type, lexeme, startLine, startColumn, endLine, endColumn)
     {
         internal readonly T Value = value;
     }

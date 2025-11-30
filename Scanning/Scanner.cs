@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PloverParser.Debugging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -9,65 +10,19 @@ using static Plover.Scanning.TokenType;
 
 namespace Plover.Scanning
 {
-    internal class ScanError(int startLine, int startColumn, int endLine, int endColumn, string message)
+    internal class ScanError(int startLine, int startColumn, int endLine, int endColumn, string message, List<ErrorSuggestion> suggestions)
     {
         public readonly int StartLine = startLine;
         public readonly int StartColumn = startColumn;
         public readonly int EndLine = endLine;
         public readonly int EndColumn = endColumn;
         public readonly string Message = message;
+        public readonly List<ErrorSuggestion> Suggestions = suggestions;
 
         public string VisualMessage(List<string> source)
         {
-            // first get the lines between the start - 1 and end + 1
-            int initialLine = Math.Max(1, (StartLine - 1));
-            int lastLine = Math.Min(EndLine + 1, source.Count);
-            List<string> errorLines = source[(initialLine - 1)..(lastLine)];
-            // add line numbers to all of the lines
-            int maxLineNumberLength = lastLine.ToString().Length;
-            string separator = "| ";
-            for (int i = 0; i < errorLines.Count; i++)
-            {
-                int lineNumber = initialLine + i;
-                string lineNumberStr = lineNumber.ToString();
-                lineNumberStr = lineNumberStr.PadLeft(maxLineNumberLength);
-                errorLines[i] = lineNumberStr + separator + errorLines[i];
-            }
-
-            // next, add an underline for the selected part of the lines
-            List<char[]> underlineLines = new List<char[]>();
-            int numLines = EndLine - StartLine + 1;
-            int leftPad = maxLineNumberLength + separator.Length;
-            // make all of these lines have ~~~~~ under them, with the length of the respective line
-            for (int i = 0; i < numLines; i++)
-            {
-                underlineLines.Add(("".PadLeft(maxLineNumberLength, ' ') + separator + "".PadLeft(source[StartLine - 1 + i].Length + 1, '~')).ToCharArray());
-            }
-            // for the first line, replace '~' with ' ' up to startColumn
-            for (int i = 1; i < StartColumn; i++)
-            {
-                underlineLines[0][leftPad+i - 1] = ' ';
-            }
-            // for the last line, replace '~' with ' ' from after endColumn
-            for (int i = EndColumn + 1; i < source[EndLine - 1].Length + 2; i++)
-            {
-                underlineLines[^1][leftPad+i - 1] = ' ';
-            }
-            // additionally, add an error message line below the first error line
-            string error_message = "".PadLeft(maxLineNumberLength, ' ') + separator + "".PadLeft(StartColumn - 1, ' ')+ "^ " + Message;
-            int additionalLines = StartLine - initialLine;
-            // now insert the underlines after their respective lines
-            for (int i = numLines - 1; i >= 0; i--)
-            {
-                int index = additionalLines + i;
-                if(i == 0)
-                {
-                    errorLines.Insert(index+1, error_message);
-                }
-                errorLines.Insert(index+1, new string(underlineLines[i]));
-            }
-
-            return string.Join('\n', errorLines);
+            return Debugging.CreateErrorMessage(source, [new ErrorMessage(StartLine, StartColumn, Message)], [],
+                [new ErrorUnderline(StartLine, StartColumn, EndLine, EndColumn, '~')], [new ErrorPointer(StartLine, StartColumn, [Message])], new ErrorSettings(1, 1, 1, 1), Suggestions);
         }
     }
 
@@ -120,7 +75,7 @@ namespace Plover.Scanning
                     return possibleToken;
                 }
             }
-            if(Column != 1)
+            if(Column != 1 && Line > Lines.Count)
             {
                 Lines.Add(Source[(Current - Column + 1)..(Current)]);
             }
@@ -144,11 +99,11 @@ namespace Plover.Scanning
                 case '%': return CreateToken(PERCENT);
                 case '^': return CreateToken(CARET);
                 case '!':
-                    Consume('=', "Expected '=' after '!'.");
-                    return CreateToken(BANG_EQUAL);
+                    if(Consume('=', "Expected '=' after '!'.")) return CreateToken(BANG_EQUAL);
+                    return null;
                 case '=':
-                    Consume('=', "Expected '=' after '='.");
-                    return CreateToken(EQUAL_EQUAL);
+                    if (Consume('=', "Expected '=' after '='.")) return CreateToken(EQUAL_EQUAL);
+                    return null;
                 case '<':
                     return CreateToken(Match('=') ? LT_EQUAL :
                                        Match('<') ? LT_LT :
@@ -200,7 +155,8 @@ namespace Plover.Scanning
                     if (IsDigit(c)) return Number();
                     else if (IsAlpha(c)) return SimpleIdentifier();
 
-                    ReportError(StartLine, StartColumn, StartLine, StartColumn, $"Unexpected character '{c}'.");
+                    ReportError(StartLine, StartColumn, StartLine, StartColumn, $"Unexpected character '{c}'.",
+                        new ErrorSuggestion([new ErrorDeleteSuggestion(StartLine, StartColumn, 1)], $"Remove '{c}' at {StartLine}:{StartColumn}."));
                     return null;
             }
         }
@@ -214,7 +170,7 @@ namespace Plover.Scanning
             {
                 char current = Advance();
                 if (current == '\n') //\n not allowed in simple strings
-                    ReportError(Line, Column, "Char literal cannot contain new line.");
+                    ReportError(Line, Column, "Char literal cannot contain new line.", new ErrorSuggestion([new ErrorCombineLinesSuggestion(Line-1), new ErrorInsertSuggestion(Line-1, Lines[Line-2].Length+1, "\\n")], "Remove the new line and use \'\\n\' instead."));
                 if (current == '\'') //end on '
                 {
                     terminated = true;
@@ -229,7 +185,7 @@ namespace Plover.Scanning
                     if (Match('0')) { value = '\0'; continue; }
                     if (Match('"')) { value = '"'; continue; }
                     if (Match('`')) { value = '`'; continue; }
-                    ReportError(Line, Column-1, "Unescaped '\\'.");
+                    ReportError(Line, Column-1, "Unescaped '\\'.", new ErrorSuggestion([new ErrorInsertSuggestion(Line, Column, "\\")], "Add another '\\'."));
                 }
                 value = current;
             }
@@ -257,7 +213,7 @@ namespace Plover.Scanning
             {
                 char current = Advance();
                 if (current == '\n') //\n not allowed in custom literals
-                    ReportError(Line, Column, "Custom literals cannot contain new line.");
+                    ReportError(Line, Column, "Custom literals cannot contain new line.", new ErrorSuggestion([new ErrorCombineLinesSuggestion(Line - 1), new ErrorInsertSuggestion(Line - 1, Lines[Line - 2].Length + 1, "\\n")], "Remove the new line and use \'\\n\' instead."));
                 if (current == '`' && !(Peek() == '`')) //end on non-double `
                 {
                     terminated = true;
@@ -276,7 +232,7 @@ namespace Plover.Scanning
                     if (Match('0')) { builder.Append('\0'); continue; }
                     if (Match('"')) { builder.Append('"'); continue; }
                     if (Match('`')) { builder.Append('`'); continue; }
-                    ReportError(Line, Column-1, "Unescaped '\\'.");
+                    ReportError(Line, Column-1, "Unescaped '\\'.", new ErrorSuggestion([new ErrorInsertSuggestion(Line, Column, "\\")], "Add another '\\'."));
                 }
                 builder.Append(current);
             }
@@ -407,7 +363,7 @@ namespace Plover.Scanning
             {
                 char current = Advance();
                 if (current == '\n') //\n not allowed in simple strings
-                    ReportError(Line, Column, "Simple string cannot contain new line.");
+                    ReportError(Line, Column, "Simple string cannot contain a new line.", new ErrorSuggestion([new ErrorCombineLinesSuggestion(Line - 1), new ErrorInsertSuggestion(Line - 1, Lines[Line - 2].Length + 1, "\\n")], "Remove the new line and use \'\\n\' instead."));
                 if (current == '"' && !(Peek() == '"')) //end on non-double "
                 {
                     terminated = true;
@@ -426,7 +382,7 @@ namespace Plover.Scanning
                     if (Match('0')) { builder.Append('\0'); continue; }
                     if (Match('"')) { builder.Append('"'); continue; }
                     if (Match('`')) { builder.Append('`'); continue; }
-                    ReportError(Line, Column-1, "Unescaped '\\'.");
+                    ReportError(Line, Column-1, "Unescaped '\\'.", new ErrorSuggestion([new ErrorInsertSuggestion(Line, Column, "\\")], "Add another '\\'."));
                 }
                 builder.Append(current);
             }
@@ -462,14 +418,15 @@ namespace Plover.Scanning
             return true;
         }
 
-        void Consume(char expected, string message)
+        bool Consume(char expected, string message)
         {
             if (Match(expected))
             {
-                return;
+                return true;
             }
 
-            ReportError(message);
+            ReportError(message, new ErrorSuggestion([new ErrorInsertSuggestion(Line, Column, $"{expected}")], $"Add in '{expected}'."));
+            return false;
         }
 
         // returns current char and moves to next
@@ -492,7 +449,7 @@ namespace Plover.Scanning
         IdentifierToken CreateIdentifierToken(TokenType type, string value)
         {
             string text = Source[Start..Current];
-            IdentifierToken newToken = new IdentifierToken(type, text, StartLine, StartColumn, Line, Column, value);
+            IdentifierToken newToken = new IdentifierToken(type, text, StartLine, StartColumn, Line, Column-1, value);
             Tokens.Add(newToken);
             return newToken;
         }
@@ -500,7 +457,7 @@ namespace Plover.Scanning
         BoolToken CreateBoolToken(TokenType type, bool value)
         {
             string text = Source[Start..Current];
-            BoolToken newToken = new BoolToken(type, text, StartLine, StartColumn, Line, Column, value);
+            BoolToken newToken = new BoolToken(type, text, StartLine, StartColumn, Line, Column-1, value);
             Tokens.Add(newToken);
             return newToken;
         }
@@ -508,7 +465,7 @@ namespace Plover.Scanning
         CustomLiteralToken CreateCustomLiteralToken(TokenType type, string value, string suffix)
         {
             string text = Source[Start..Current];
-            CustomLiteralToken newToken = new CustomLiteralToken(type, text, StartLine, StartColumn, Line, Column, value, suffix);
+            CustomLiteralToken newToken = new CustomLiteralToken(type, text, StartLine, StartColumn, Line, Column-1, value, suffix);
             Tokens.Add(newToken);
             return newToken;
         }
@@ -516,7 +473,7 @@ namespace Plover.Scanning
         FloatToken CreateFloatToken(TokenType type, double value, string suffix)
         {
             string text = Source[Start..Current];
-            FloatToken newToken = new FloatToken(type, text, StartLine, StartColumn, Line, Column, value, suffix);
+            FloatToken newToken = new FloatToken(type, text, StartLine, StartColumn, Line, Column-1, value, suffix);
             Tokens.Add(newToken);
             return newToken;
         }
@@ -524,7 +481,7 @@ namespace Plover.Scanning
         IntegerToken CreateIntegerToken(TokenType type, BigInteger value, string? prefix, string suffix)
         {
             string text = Source[Start..Current];
-            IntegerToken newToken = new IntegerToken(type, text, StartLine, StartColumn, Line, Column, value, prefix, suffix);
+            IntegerToken newToken = new IntegerToken(type, text, StartLine, StartColumn, Line, Column-1, value, prefix, suffix);
             Tokens.Add(newToken);
             return newToken;
         }
@@ -533,7 +490,7 @@ namespace Plover.Scanning
         CharToken CreateCharToken(TokenType type, char value)
         {
             string text = Source[Start..Current];
-            CharToken newToken = new CharToken(type, text, StartLine, StartColumn, Line, Column, value);
+            CharToken newToken = new CharToken(type, text, StartLine, StartColumn, Line, Column-1, value);
             Tokens.Add(newToken);
             return newToken;
         }
@@ -541,7 +498,7 @@ namespace Plover.Scanning
         StringToken CreateStringToken(TokenType type, string value)
         {
             string text = Source[Start..Current];
-            StringToken newToken = new StringToken(type, text, StartLine, StartColumn, Line, Column, value);
+            StringToken newToken = new StringToken(type, text, StartLine, StartColumn, Line, Column-1, value);
             Tokens.Add(newToken);
             return newToken;
         }
@@ -549,23 +506,23 @@ namespace Plover.Scanning
         Token CreateToken(TokenType type)
         {
             string text = Source[Start..Current];
-            Token newToken = new Token(type, text, StartLine, StartColumn, Line, Column);
+            Token newToken = new Token(type, text, StartLine, StartColumn, Line, Column-1);
             Tokens.Add(newToken);
             return newToken;
         }
 
-        void ReportError(string message)
+        void ReportError(string message, ErrorSuggestion? suggestion=null)
         {
-            Errors.Add(new ScanError(StartLine, StartColumn, Line, Column, message));
+            Errors.Add(new ScanError(StartLine, StartColumn, Line, Column, message, suggestion is null ? [] : [suggestion]));
         }
 
-        void ReportError(int startLine, int startColumn, string message)
+        void ReportError(int startLine, int startColumn, string message, ErrorSuggestion? suggestion = null)
         {
-            Errors.Add(new ScanError(startLine, startColumn, Line, Column, message));
+            Errors.Add(new ScanError(startLine, startColumn, Line, Column, message, suggestion is null ? [] : [suggestion]));
         }
-            void ReportError(int startLine, int startColumn, int endLine, int endColumn, string message)
+            void ReportError(int startLine, int startColumn, int endLine, int endColumn, string message, ErrorSuggestion? suggestion = null)
             {
-                Errors.Add(new ScanError(startLine, startColumn, endLine, endColumn, message));
+                Errors.Add(new ScanError(startLine, startColumn, endLine, endColumn, message, suggestion is null ? [] : [suggestion]));
             }
 
 

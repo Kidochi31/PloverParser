@@ -34,7 +34,7 @@ namespace PloverParser.Scanning
                 {
                     return;
                 }
-                text = GetEscapedReplText(text);
+                text = Debugging.Repl.GetEscapedReplText(text);
                 Scanner scanner = new Scanner(text);
                 List<Token> tokens = scanner.ScanTokens();
                 List<ScanError> errors = scanner.Errors;
@@ -47,35 +47,10 @@ namespace PloverParser.Scanning
                 else Console.WriteLine("\nNo scanning errors.");
                 foreach (ScanError error in errors)
                     {
-                        Console.WriteLine($"\nError at line {error.StartLine}, column {error.StartColumn}.");
                         Console.WriteLine(error.VisualMessage(scanner.Lines));
                     }
                 Console.WriteLine("");
             }
-        }
-
-        static string GetEscapedReplText(string text)
-        {
-            // replace \\ with \ and \n with newline.
-            StringBuilder newText = new StringBuilder();
-            bool escaped = false;
-            foreach (char c in text)
-            {
-                if (escaped)
-                {
-                    if (c == 'n') newText.Append('\n');
-                    else newText.Append(c);
-                    escaped = false;
-                    continue;
-                }
-                if (c == '\\')
-                {
-                    escaped = true;
-                    continue;
-                }
-                newText.Append(c);
-            }
-            return newText.ToString();
         }
     }
 }
