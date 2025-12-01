@@ -1,4 +1,4 @@
-﻿using PloverParser.Debugging;
+﻿using Plover.Debugging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace Plover.Scanning
 
         public string VisualMessage(List<string> source)
         {
-            return Debugging.CreateErrorMessage(source, [new ErrorMessage(StartLine, StartColumn, Message)], [],
+            return Debug.CreateErrorMessage(source, [new ErrorMessage(StartLine, StartColumn, Message)], [],
                 [new ErrorUnderline(StartLine, StartColumn, EndLine, EndColumn, '~')], [new ErrorPointer(StartLine, StartColumn, [Message])], new ErrorSettings(1, 1, 1, 1), Suggestions);
         }
     }
@@ -321,7 +321,7 @@ namespace Plover.Scanning
                 //string numberText = Source[Start..Current];
                 string numberText = Source[Start..finalDigitIndex];
                 string suffixText = finalDigitIndex + 1 <= Current ? Source[(finalDigitIndex + 1)..Current] : "";
-                return CreateIntegerToken(INTEGER, BigInteger.Parse(numberText), null, suffixText);
+                return CreateIntegerToken(INTEGER, BigInteger.Parse(numberText.Replace("_", "")), null, suffixText);
             }
         }
 

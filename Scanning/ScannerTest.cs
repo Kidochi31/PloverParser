@@ -1,4 +1,5 @@
-﻿using Plover.Scanning;
+﻿using Plover.Debugging;
+using Plover.Scanning;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PloverParser.Scanning
+namespace Plover.Scanning
 {
     internal class ScannerTest
     {
@@ -28,13 +29,13 @@ namespace PloverParser.Scanning
                 }
                 if (text == "quit")
                 {
-                    Environment.Exit(0);
+                    System.Environment.Exit(0);
                 }
                 if (text == "menu")
                 {
                     return;
                 }
-                text = Debugging.Repl.GetEscapedReplText(text);
+                text = Repl.GetEscapedReplText(text);
                 Scanner scanner = new Scanner(text);
                 List<Token> tokens = scanner.ScanTokens();
                 List<ScanError> errors = scanner.Errors;

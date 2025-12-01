@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace PloverParser.Debugging
+namespace Plover.Debugging
 {
     public record class ErrorMessage(int Line, int Column, string errorMessage) { }
 
@@ -39,7 +39,7 @@ namespace PloverParser.Debugging
     }
 
 
-    public static class Debugging
+    public static class Debug
     {
         public static string CreateErrorMessage(List<string> lines, List<ErrorMessage> errorMessages, List<string> messages, List<ErrorUnderline> underlines, List<ErrorPointer> pointers, ErrorSettings settings, List<ErrorSuggestion> suggestions)
         {
@@ -83,20 +83,21 @@ namespace PloverParser.Debugging
                 {
                     int line = fix.Line;
                     if (!suggestedLines.ContainsKey(line)) suggestedLines[line] = lines[line - 1];
-                    suggestedLines[line] = suggestedLines[line].Remove(fix.Column - 1, Math.Min(deleteFix.Length + fix.Column - 1, suggestedLines[line].Length - 1) - (fix.Column - 1));
+                    Console.WriteLine(deleteFix.Length);
+                    Console.WriteLine(deleteFix.Length + fix.Column - 1);
+                    Console.WriteLine(suggestedLines[line].Length - 1);
+                    Console.WriteLine(fix.Column - 1);
+                    Console.WriteLine(Math.Min(deleteFix.Length + fix.Column - 1, suggestedLines[line].Length) - (fix.Column - 1));
+                    suggestedLines[line] = suggestedLines[line].Remove(fix.Column - 1, Math.Min(deleteFix.Length + fix.Column - 1, suggestedLines[line].Length) - (fix.Column - 1));
                 }
                 else if (fix is ErrorReplaceSuggestion replaceFix)
                 {
                     int line = fix.Line;
                     if (!suggestedLines.ContainsKey(line)) suggestedLines[line] = lines[line - 1];
-                    Console.WriteLine(replaceFix.Length + fix.Column - 1);
-                    Console.WriteLine(suggestedLines[line].Length - 1);
-                    Console.WriteLine(fix.Column - 1);
-                    Console.WriteLine(Math.Min(replaceFix.Length + fix.Column - 1, suggestedLines[line].Length - 1) - (fix.Column - 1));
-                    suggestedLines[line] = suggestedLines[line].Remove(fix.Column - 1, Math.Min(replaceFix.Length + fix.Column - 1, suggestedLines[line].Length - 1) - (fix.Column - 1));
+                    suggestedLines[line] = suggestedLines[line].Remove(fix.Column - 1, Math.Min(replaceFix.Length + fix.Column - 1, suggestedLines[line].Length) - (fix.Column - 1));
                     suggestedLines[line] = suggestedLines[line].Insert(replaceFix.Column - 1, replaceFix.ReplaceText);
                 }
-                else if (fix is ErrorCombineLinesSuggestion combineFix )
+                else if (fix is ErrorCombineLinesSuggestion combineFix)
                 {
                     int line = fix.Line;
                     if (!suggestedLines.ContainsKey(line)) suggestedLines[line] = lines[line - 1];

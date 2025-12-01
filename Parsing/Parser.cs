@@ -1,5 +1,5 @@
 ﻿using Plover.Scanning;
-using PloverParser.Debugging;
+using Plover.Debugging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace Plover.Parsing
 
         public string VisualMessage(List<string> source)
         {
-            return Debugging.CreateErrorMessage(source, [new ErrorMessage(StartToken.StartLine, StartToken.StartColumn, Message)], [],
+            return Debug.CreateErrorMessage(source, [new ErrorMessage(StartToken.StartLine, StartToken.StartColumn, Message)], [],
                 [new ErrorUnderline(StartToken.StartLine, StartToken.StartColumn, EndToken.EndLine, EndToken.EndColumn, '~')], [new ErrorPointer(StartToken.StartLine, StartToken.StartColumn, [Message])], new ErrorSettings(1, 1, 1, 1), Suggestions);
         }
     }

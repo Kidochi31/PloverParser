@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PloverParser.Debugging
+namespace Plover.Debugging
 {
     internal static class Repl
     {
