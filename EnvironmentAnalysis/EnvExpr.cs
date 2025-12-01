@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using Plover.Environment;
 using Plover.Scanning;
 
-namespace Plover.TypeAnalysis
+namespace Plover.EnvironmentAnalysis
 {
-    internal abstract record class TExpr(EnvironmentState Environment)
+    internal abstract record class EnvExpr(EnvironmentState Environment)
     {
         public override abstract string ToString();
 
@@ -21,32 +21,32 @@ namespace Plover.TypeAnalysis
         // Variable Writing
 
 
-        public record class FunctionCall(EnvironmentState Environment, TExpr? Function, List<TExpr?> Arguments): TExpr(Environment)
+        public record class FunctionCall(EnvironmentState Environment, EnvExpr? Function, List<EnvExpr?> Arguments): EnvExpr(Environment)
         {
             public override string ToString() => $"call ({Function?.ToString() ?? "null"})({string.Join(", ", from arg in Arguments select arg?.ToString() ?? "null")})";
         }
 
-        public record class OperatorFunction(EnvironmentState Environment, TokenType OperatorType, int Args) : TExpr(Environment)
+        public record class OperatorFunction(EnvironmentState Environment, TokenType OperatorType, int Args) : EnvExpr(Environment)
         {
             public override string ToString() => $"function {OperatorType}:{Args}";
         }
 
-        public record class Conditional(EnvironmentState Environment, TExpr? Condition, TExpr? IfTrue, TExpr? IfFalse): TExpr(Environment)
+        public record class Conditional(EnvironmentState Environment, EnvExpr? Condition, EnvExpr? IfTrue, EnvExpr? IfFalse): EnvExpr(Environment)
         {
             public override string ToString() => $"if ({Condition?.ToString() ?? "null"}) then ({IfTrue?.ToString() ?? "null"}) else ({IfFalse?.ToString() ?? "null"})";
         }
 
-        public record class Constant(EnvironmentState Environment, object Value) : TExpr(Environment)
+        public record class Constant(EnvironmentState Environment, object Value) : EnvExpr(Environment)
         {
             public override string ToString() => $"constant {Value}";
         }
 
-        public record class VariableRead(EnvironmentState Environment, Variable Variable) : TExpr(Environment)
+        public record class VariableRead(EnvironmentState Environment, Variable Variable) : EnvExpr(Environment)
         {
             public override string ToString() => $"{Variable.Name} in {Environment.GetEnvironmentName()}";
         }
 
-        public record class VariableWrite(EnvironmentState Environment, Variable Variable, TExpr? Value, TExpr? Evaluate) : TExpr(Environment)
+        public record class VariableWrite(EnvironmentState Environment, Variable Variable, EnvExpr? Value, EnvExpr? Evaluate) : EnvExpr(Environment)
         {
             public override string ToString() => $"({Variable.Name} in {Environment.GetEnvironmentName()} <- ({Value?.ToString() ?? "null"})) then return ({Evaluate?.ToString() ?? "null"})";
         }

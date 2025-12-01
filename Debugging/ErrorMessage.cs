@@ -83,11 +83,6 @@ namespace Plover.Debugging
                 {
                     int line = fix.Line;
                     if (!suggestedLines.ContainsKey(line)) suggestedLines[line] = lines[line - 1];
-                    Console.WriteLine(deleteFix.Length);
-                    Console.WriteLine(deleteFix.Length + fix.Column - 1);
-                    Console.WriteLine(suggestedLines[line].Length - 1);
-                    Console.WriteLine(fix.Column - 1);
-                    Console.WriteLine(Math.Min(deleteFix.Length + fix.Column - 1, suggestedLines[line].Length) - (fix.Column - 1));
                     suggestedLines[line] = suggestedLines[line].Remove(fix.Column - 1, Math.Min(deleteFix.Length + fix.Column - 1, suggestedLines[line].Length) - (fix.Column - 1));
                 }
                 else if (fix is ErrorReplaceSuggestion replaceFix)

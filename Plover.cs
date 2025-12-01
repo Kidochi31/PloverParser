@@ -1,7 +1,7 @@
 ﻿using Plover.Scanning;
 using Plover.Parsing;
 using System;
-using Plover.TypeAnalysis;
+using Plover.EnvironmentAnalysis;
 
 namespace Plover
 {
@@ -11,7 +11,7 @@ namespace Plover
         {
             { "scanner-repl", ("Test the scanner via repl", ScannerTest.ReplTest) },
             { "parser-expr-repl", ("Test parsing expressions via repl", ParserTest.ExprReplTest) },
-            { "analyser-expr-repl", ("Test analysing expressions via repl", AnalyserTest.ExprAnalyserReplTest) },
+            { "env-expr-repl", ("Test environment analysis of expressions via repl", EnvironmentAnalyserTest.ExprAnalyserReplTest) },
             { "quit", ("Quit the program", () => {System.Environment.Exit(0); }) },
             { "help", ("See a list of comands", Help)}
         };

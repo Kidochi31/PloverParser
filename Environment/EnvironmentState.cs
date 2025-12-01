@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Plover.Scanning;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,20 +35,20 @@ namespace Plover.Environment
         public Variable AddAnonymousVariable()
         {
             string name = $"@non{AnonymousVarCounter++}";
-            Variable newVariable = new Variable(name);
+            Variable newVariable = new Variable(name, null);
             Variables[name] = newVariable;
             return newVariable;
 
         }
 
-        public Variable? AddVariable(string name)
+        public Variable? AddVariable(string name, Token? declarationToken)
         {
             if(GetVariable(name) is not null)
             {
                 // no shadowing allowed
                 return null;
             }
-            Variable newVariable = new Variable(name);
+            Variable newVariable = new Variable(name, declarationToken);
             Variables[name] = newVariable;
             return newVariable;
         }

@@ -10,15 +10,15 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace Plover.TypeAnalysis
+namespace Plover.EnvironmentAnalysis
 {
-    internal class AnalyserTest
+    internal class EnvironmentAnalyserTest
     {
         public static void ExprAnalyserReplTest()
         {
             Console.WriteLine("");
-            Console.WriteLine("Welcome to the expression analyser repl.");
-            Console.WriteLine("Enter in the text of an expression to see analysis result.");
+            Console.WriteLine("Welcome to the expression environment analyser repl.");
+            Console.WriteLine("Enter in the text of an expression to see environemnt analysis result.");
             Console.WriteLine("Enter \\n to create a new line, and \\\\n to enter '\\n'.");
             Console.WriteLine("Enter 'quit' to quit.");
             Console.WriteLine("Enter 'menu' to return to the menu.");
@@ -70,8 +70,8 @@ namespace Plover.TypeAnalysis
                     continue;
                 }
 
-                TypeAnalyser analyser = new TypeAnalyser();
-                TExpr? analysisResults = analyser.AnalyseExpressionWithoutEnvironment(expression);
+                EnvironmentAnalyser analyser = new EnvironmentAnalyser();
+                EnvExpr? analysisResults = analyser.AnalyseExpressionWithoutEnvironment(expression);
                 Console.WriteLine("Expression analysis:");
                 Console.WriteLine(analysisResults);
                 Console.WriteLine("");
