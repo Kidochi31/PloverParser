@@ -11,6 +11,8 @@ namespace Plover
         {
             { "scanner-repl", ("Test the scanner via repl", ScannerTest.ReplTest) },
             { "parser-expr-repl", ("Test parsing expressions via repl", ParserTest.ExprReplTest) },
+            { "parser-type-repl", ("Test parsing type expressions via repl", ParserTest.TypeExprReplTest) },
+            { "parser-stmt-repl", ("Test parsing statements via repl", ParserTest.StmtReplTest) },
             { "env-expr-repl", ("Test environment analysis of expressions via repl", EnvironmentAnalyserTest.ExprAnalyserReplTest) },
             { "quit", ("Quit the program", () => {System.Environment.Exit(0); }) },
             { "help", ("See a list of comands", Help)}

@@ -1,5 +1,6 @@
 ﻿using Plover.Debugging;
 using Plover.Environment;
+using Plover.EnvironmentAnalysis;
 using Plover.Parsing;
 using Plover.Scanning;
 using System;
@@ -10,9 +11,9 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace Plover.EnvironmentAnalysis
+namespace Plover.TypeAnalysis
 {
-    internal class EnvironmentAnalyserTest
+    internal class TypeAnalyserTest
     {
         public static void ExprAnalyserReplTest()
         {

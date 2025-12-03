@@ -90,7 +90,13 @@ namespace Plover.Scanning
             {
                 case '(': return CreateToken(LEFT_PAREN);
                 case ')': return CreateToken(RIGHT_PAREN);
+                case '[': return CreateToken(LEFT_SQUARE);
+                case ']': return CreateToken(RIGHT_SQUARE);
+                case '{': return CreateToken(LEFT_BRACE);
+                case '}': return CreateToken(RIGHT_BRACE);
                 case ',': return CreateToken(COMMA);
+                case ';': return CreateToken(SEMICOLON);
+                case ':': return CreateToken(COLON);
                 case '~': return CreateToken(TILDE);
 
                 case '-': return CreateToken(MINUS);
@@ -107,6 +113,7 @@ namespace Plover.Scanning
                 case '<':
                     return CreateToken(Match('=') ? LT_EQUAL :
                                        Match('<') ? LT_LT :
+                                       Match('-') ? LT_MINUS :
                                        LT);
                 case '>':
                     return CreateToken(Match('=') ? GT_EQUAL :
@@ -539,6 +546,7 @@ namespace Plover.Scanning
             {"and", AND}, {"or", OR}, {"not", NOT}, {"xor", XOR},
             {"true", TRUE}, {"false", FALSE},
             {"if", IF}, {"then", THEN}, {"else", ELSE}, {"unless", UNLESS},
+            {"print", PRINT}, {"let", LET},
         };
     }
 }

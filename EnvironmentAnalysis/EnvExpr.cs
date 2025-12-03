@@ -17,6 +17,7 @@ namespace Plover.EnvironmentAnalysis
         // Operator functions
         // Conditional
         // Constant
+        // Literal
         // Variable Reading
         // Variable Writing
 
@@ -39,6 +40,11 @@ namespace Plover.EnvironmentAnalysis
         public record class Constant(EnvironmentState Environment, object Value) : EnvExpr(Environment)
         {
             public override string ToString() => $"constant {Value}";
+        }
+
+        public record class Literal(EnvironmentState Environment, LiteralToken token) : EnvExpr(Environment)
+        {
+            public override string ToString() => $"constant {token.Lexeme}";
         }
 
         public record class VariableRead(EnvironmentState Environment, Variable Variable) : EnvExpr(Environment)

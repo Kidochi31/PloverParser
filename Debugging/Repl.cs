@@ -31,5 +31,34 @@ namespace Plover.Debugging
             }
             return newText.ToString();
         }
+
+        public static string? GetUserInput()
+        {
+            string text = "";
+            while (true)
+            {
+                Console.Write(">>> ");
+                string? nexttext = Console.ReadLine();
+                if (text == "" && (nexttext is null || nexttext == ""))
+                {
+                    continue;
+                }
+                if (nexttext == "quit")
+                {
+                    System.Environment.Exit(0);
+                }
+                if (nexttext == "menu")
+                {
+                    return null;
+                }
+
+                if (nexttext is not null && nexttext != "")
+                {
+                    text += nexttext + "\n";
+                    continue;
+                }
+                return text[..^1];
+            }
+        }
     }
 }

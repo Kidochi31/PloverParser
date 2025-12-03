@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Plover.EnvironmentAnalysis
 {
-    internal class AnalysisError(Expr expression, string message, List<ErrorPointer>? otherPointers = null)
+    internal class EnvironmentAnalysisError(Expr expression, string message, List<ErrorPointer>? otherPointers = null)
     {
         public readonly Expr Expression = expression;
         public readonly string Message = message;
@@ -31,7 +31,7 @@ namespace Plover.EnvironmentAnalysis
     internal class EnvironmentAnalyser
     {
 
-        public List<AnalysisError> Errors = new();
+        public List<EnvironmentAnalysisError> Errors = new();
 
         public EnvExpr? AnalyseExpressionWithoutEnvironment(Expr expression)
         {
@@ -152,24 +152,10 @@ namespace Plover.EnvironmentAnalysis
             }
         }
 
-        EnvExpr.Constant AnalyseLiteralExpression(EnvironmentState environment, Expr.Literal expression)
+        EnvExpr.Literal AnalyseLiteralExpression(EnvironmentState environment, Expr.Literal expression)
         {
-            switch (expression.Token)
-            {
-                case BoolToken boolToken:
-                    return new EnvExpr.Constant(environment, boolToken.Value);
-                case StringToken stringToken:
-                    return new EnvExpr.Constant(environment, stringToken.Value);
-                case CharToken charToken:
-                    return new EnvExpr.Constant(environment, charToken.Value);
-                case IntegerToken integerToken:
-                    return new EnvExpr.Constant(environment, integerToken.Value);
-                case FloatToken floatToken:
-                    return new EnvExpr.Constant(environment, floatToken.Value);
-                case CustomLiteralToken:
-                default:
-                    throw new Exception($"Literal expression type not supported: {expression.Token.GetType()}");
-            }
+            return new EnvExpr.Literal(environment, expression.Token);
+            
         }
 
         EnvExpr? AnalyseBinaryExpression(EnvironmentState environment, Expr.Binary expression)
@@ -196,7 +182,7 @@ namespace Plover.EnvironmentAnalysis
 
         void LogError(Expr expression, string message, List<ErrorPointer>? otherPointers = null)
         {
-            Errors.Add(new AnalysisError(expression, message, otherPointers));
+            Errors.Add(new EnvironmentAnalysisError(expression, message, otherPointers));
         }
     }
 }
