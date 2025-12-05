@@ -99,7 +99,7 @@ namespace Plover.Scanning
                 case ':': return CreateToken(COLON);
                 case '~': return CreateToken(TILDE);
 
-                case '-': return CreateToken(MINUS);
+                case '-': return CreateToken(Match('>') ? MINUS_GT : MINUS);
                 case '+': return CreateToken(PLUS);
                 case '*': return CreateToken(STAR);
                 case '%': return CreateToken(PERCENT);
@@ -546,7 +546,8 @@ namespace Plover.Scanning
             {"and", AND}, {"or", OR}, {"not", NOT}, {"xor", XOR},
             {"true", TRUE}, {"false", FALSE},
             {"if", IF}, {"then", THEN}, {"else", ELSE}, {"unless", UNLESS},
-            {"print", PRINT}, {"let", LET},
+            {"print", PRINT}, {"let", LET}, {"return", RETURN},
+            {"fn", FN},
         };
     }
 }

@@ -4,20 +4,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Plover.Environment
 {
-    internal class Variable
+    public class TypeVariable
     {
         private static ulong VariableIdCounter = 0;
         public ulong VariableId;
         public string Name;
-        public Token? DeclarationToken;
 
-        public Variable(string name, Token? declarationToken)
+        public TypeVariable(string name)
         {
             Name = name;
-            DeclarationToken = declarationToken;
             VariableId = VariableIdCounter++;
         }
 

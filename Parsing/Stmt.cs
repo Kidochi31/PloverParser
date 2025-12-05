@@ -22,7 +22,15 @@ namespace Plover.Parsing
             public override Token GetFirstToken() => PrintToken;
             public override Token GetLastToken() => Semicolon;
 
-            public override string ToString() => $"print ({Expression});";
+            public override string ToString() => $"print ({Expression}) ;";
+        };
+
+        public record class Return(Token ReturnToken, Expr? Expression, Token Semicolon) : Stmt
+        {
+            public override Token GetFirstToken() => ReturnToken;
+            public override Token GetLastToken() => Semicolon;
+
+            public override string ToString() => $"return ({Expression}) ;";
         };
 
         public record class LocVarDec(Token LetToken, IdentifierToken Identifier, TypeExpr Type, Expr? Value, Token Semicolon) : Stmt

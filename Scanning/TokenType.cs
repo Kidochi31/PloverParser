@@ -13,16 +13,18 @@ namespace Plover.Scanning
         AND, OR, NOT, XOR,
         TRUE, FALSE,
         IF, THEN, ELSE, UNLESS,
-        PRINT, LET,
+        PRINT, LET, RETURN,
+        FN,
 
         // Punctuator tokens
         EQUAL_EQUAL, BANG_EQUAL, LT, LT_EQUAL, GT, GT_EQUAL,
         AMPERSAND, BAR, CARET, TILDE,
-        COMMA, SEMICOLON, COLON,
+        COMMA, SEMICOLON, 
         LEFT_PAREN, RIGHT_PAREN, LEFT_SQUARE, RIGHT_SQUARE, LEFT_BRACE, RIGHT_BRACE,
         PLUS, MINUS, STAR, FORWARD_SLASH, PERCENT, LT_LT, GT_GT,
         UNDERSCORE,
         LT_MINUS,
+        COLON, MINUS_GT,
 
         // Literal tokens
         IDENTIFIER,

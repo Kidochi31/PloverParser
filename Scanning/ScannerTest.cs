@@ -11,6 +11,26 @@ namespace Plover.Scanning
 {
     internal class ScannerTest
     {
+        public static (List<Token>?, Scanner) ScanAndPrintOnError(string text)
+        {
+            Scanner scanner = new Scanner(text);
+            List<Token> tokens = scanner.ScanTokens();
+            List<ScanError> errors = scanner.Errors;
+
+            if (errors.Count > 0)
+            {
+                Console.WriteLine("\nScanning errors:");
+                foreach (ScanError error in errors)
+                {
+                    Console.WriteLine(error.VisualMessage(scanner.Lines));
+                }
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            return (tokens, scanner);
+        }
+
         public static void ReplTest()
         {
             Console.WriteLine("");
@@ -21,36 +41,21 @@ namespace Plover.Scanning
             Console.WriteLine("Enter 'menu' to return to the menu.");
 
             while (true){
-                Console.Write(">>> ");
-                string? text = Console.ReadLine();
-                if(text is null || text == "")
-                {
-                    continue;
-                }
-                if (text == "quit")
-                {
-                    System.Environment.Exit(0);
-                }
-                if (text == "menu")
+                string? text = Repl.GetUserInput();
+                if (text is null)
                 {
                     return;
                 }
-                text = Repl.GetEscapedReplText(text);
-                Scanner scanner = new Scanner(text);
-                List<Token> tokens = scanner.ScanTokens();
-                List<ScanError> errors = scanner.Errors;
-
+                (List<Token>? tokens, _) = ScanAndPrintOnError(text);
+                if(tokens is null)
+                {
+                    continue;
+                }
+                Console.WriteLine("\nNo scanning errors.");
                 foreach (Token token in tokens)
                 {
                     Console.WriteLine(token);
                 }
-                if (errors.Count > 0) Console.WriteLine("\nScanning errors:");
-                else Console.WriteLine("\nNo scanning errors.");
-                foreach (ScanError error in errors)
-                    {
-                        Console.WriteLine(error.VisualMessage(scanner.Lines));
-                    }
-                Console.WriteLine("");
             }
         }
     }

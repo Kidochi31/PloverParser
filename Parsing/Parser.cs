@@ -159,7 +159,8 @@ namespace Plover.Parsing
 
         bool Check(TokenType type)
         {
-            if (IsAtEnd()) return false;
+            if (IsAtEnd() && type == EOF) return true;
+            if (IsAtEnd() && type != EOF) return false;
             return Peek().Type == type;
         }
 

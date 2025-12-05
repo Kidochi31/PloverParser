@@ -27,12 +27,17 @@ namespace Plover.Parsing
         {
             // certain keywords to look for:
             // print -> Print
+            // return -> Return
             // let -> LocVarDec
             // if -> IfStatement
             // { -> BracedBlock
             if (Check(PRINT))
             {
                 return Print();
+            }
+            if (Check(RETURN))
+            {
+                return Return();
             }
             if (Check(LET))
             {
@@ -57,6 +62,19 @@ namespace Plover.Parsing
             Expr printExpr = Expression();
             Token semicolonToken = Consume(SEMICOLON, "Expected semicolon after statement.", "Insert semicolon after statement.", ";");
             return new Stmt.Print(printToken, printExpr, semicolonToken);
+        }
+
+        // Return -> 'return' (Expression)? ';' ;
+        Stmt Return()
+        {
+            Token returnToken = Consume(RETURN, "Expected return statement.");
+            Expr? returnExpr = null;
+            if (!Check(SEMICOLON))
+            {
+                returnExpr = Expression();
+            }
+            Token semicolonToken = Consume(SEMICOLON, "Expected semicolon after statement.", "Insert semicolon after statement.", ";");
+            return new Stmt.Return(returnToken, returnExpr, semicolonToken);
         }
 
         // LocVarDec -> 'let' IDENTIFIER ':' Type ( '<-' Expression )? ;

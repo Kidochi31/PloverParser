@@ -35,7 +35,7 @@ namespace Plover.Parsing
             public override string ToString() => $"{Token.IdentifierName}";
         }
 
-        public class Unary(Token @operator, Expr right) : Expr
+        public class Prefix(Token @operator, Expr right) : Expr
         {
             public Token Operator = @operator;
             public Expr Right = right;

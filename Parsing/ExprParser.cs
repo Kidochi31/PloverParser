@@ -129,7 +129,7 @@ namespace Plover.Parsing
                     LogError(token, token, "not must be followed by a not or prefix expression.", suggestion);
                 }
 
-                return new Expr.Unary(token, right);
+                return new Expr.Prefix(token, right);
             }
 
             return Comparison();
@@ -317,7 +317,7 @@ namespace Plover.Parsing
             {
                 Token token = Previous;
                 Expr right = Prefix();
-                return new Expr.Unary(token, right);
+                return new Expr.Prefix(token, right);
             }
 
             return Postfix();

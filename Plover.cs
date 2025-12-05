@@ -13,7 +13,11 @@ namespace Plover
             { "parser-expr-repl", ("Test parsing expressions via repl", ParserTest.ExprReplTest) },
             { "parser-type-repl", ("Test parsing type expressions via repl", ParserTest.TypeExprReplTest) },
             { "parser-stmt-repl", ("Test parsing statements via repl", ParserTest.StmtReplTest) },
+            { "parser-decl-repl", ("Test parsing declarations via repl", ParserTest.DeclReplTest) },
             { "env-expr-repl", ("Test environment analysis of expressions via repl", EnvironmentAnalyserTest.ExprAnalyserReplTest) },
+            { "env-type-repl", ("Test environment analysis of type expressions via repl", EnvironmentAnalyserTest.TypeExprAnalyserReplTest) },
+            { "env-stmt-repl", ("Test environment analysis of statements via repl", EnvironmentAnalyserTest.StmtAnalyserReplTest) },
+            { "env-decl-repl", ("Test environment analysis of declarations via repl", EnvironmentAnalyserTest.DeclAnalyserReplTest) },
             { "quit", ("Quit the program", () => {System.Environment.Exit(0); }) },
             { "help", ("See a list of comands", Help)}
         };

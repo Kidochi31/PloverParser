@@ -8,53 +8,47 @@ using Plover.Scanning;
 
 namespace Plover.EnvironmentAnalysis
 {
-    internal abstract record class EnvExpr(EnvironmentState Environment)
+    internal abstract record class EnvExpr()
     {
         public override abstract string ToString();
 
         // Types of expressions:
         // Function call
-        // Operator functions
         // Conditional
         // Constant
         // Literal
         // Variable Reading
-        // Variable Writing
+        // Using Bindings
 
 
-        public record class FunctionCall(EnvironmentState Environment, EnvExpr? Function, List<EnvExpr?> Arguments): EnvExpr(Environment)
+        public record class FunctionCall(EnvExpr Function, List<EnvExpr> Arguments): EnvExpr()
         {
-            public override string ToString() => $"call ({Function?.ToString() ?? "null"})({string.Join(", ", from arg in Arguments select arg?.ToString() ?? "null")})";
+            public override string ToString() => $"call ({Function})({string.Join(", ", from arg in Arguments select arg.ToString())})";
         }
 
-        public record class OperatorFunction(EnvironmentState Environment, TokenType OperatorType, int Args) : EnvExpr(Environment)
+        public record class Conditional(EnvExpr Condition, EnvExpr IfTrue, EnvExpr IfFalse): EnvExpr()
         {
-            public override string ToString() => $"function {OperatorType}:{Args}";
+            public override string ToString() => $"if ({Condition}) then ({IfTrue}) else ({IfFalse})";
         }
 
-        public record class Conditional(EnvironmentState Environment, EnvExpr? Condition, EnvExpr? IfTrue, EnvExpr? IfFalse): EnvExpr(Environment)
-        {
-            public override string ToString() => $"if ({Condition?.ToString() ?? "null"}) then ({IfTrue?.ToString() ?? "null"}) else ({IfFalse?.ToString() ?? "null"})";
-        }
-
-        public record class Constant(EnvironmentState Environment, object Value) : EnvExpr(Environment)
+        public record class Constant(object Value) : EnvExpr()
         {
             public override string ToString() => $"constant {Value}";
         }
 
-        public record class Literal(EnvironmentState Environment, LiteralToken token) : EnvExpr(Environment)
+        public record class Literal(LiteralToken token) : EnvExpr()
         {
-            public override string ToString() => $"constant {token.Lexeme}";
+            public override string ToString() => $"literal {token.Lexeme}";
         }
 
-        public record class VariableRead(EnvironmentState Environment, Variable Variable) : EnvExpr(Environment)
+        public record class VariableRead(Variable Variable) : EnvExpr()
         {
-            public override string ToString() => $"{Variable.Name} in {Environment.GetEnvironmentName()}";
+            public override string ToString() => Variable.ToString();
         }
 
-        public record class VariableWrite(EnvironmentState Environment, Variable Variable, EnvExpr? Value, EnvExpr? Evaluate) : EnvExpr(Environment)
+        public record class UsingBindings(List<(Variable Variable, EnvExpr Value)> Bindings, EnvExpr Evaluate) : EnvExpr()
         {
-            public override string ToString() => $"({Variable.Name} in {Environment.GetEnvironmentName()} <- ({Value?.ToString() ?? "null"})) then return ({Evaluate?.ToString() ?? "null"})";
+            public override string ToString() => $"using ({string.Join(", ", from binding in Bindings select $"{binding.Variable} <- ({binding.Value})")}) evaluate ({Evaluate})";
         }
     }
 }

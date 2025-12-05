@@ -66,20 +66,20 @@ namespace Plover.TypeAnalysis
                         TypedVariable typedVar = environment.GetVariable(readExpr.Variable);
                         return new TExpr.VariableRead(environment, typedVar, typedVar.Type);
                     }
-                case EnvExpr.VariableWrite writeExpression:
-                    // the type of the variable is the type of the expression
-                    // i.e. this is not about how the variable is stored but simply its most refined type
-                    //  the write occurs in a new environment
-                    {
-                        TypedEnvironment newEnvironment = new TypedEnvironment(environment);
-                        TExpr? variableValue = AnalyseExpressionType(newEnvironment, writeExpression.Value);
-                        if (variableValue is null)
-                            return null;
-                        TypedVariable typedVar = newEnvironment.AddVariable(writeExpression.Variable, variableValue.Type);
-                        // now the type of the variable value is known -> we can now evaluate the evaluate expression
-                        TExpr? evaluateExpression = AnalyseExpressionType(newEnvironment, writeExpression.Evaluate);
-                        return new TExpr.VariableWrite(newEnvironment, typedVar, variableValue, evaluateExpression, evaluateExpression.Type);
-                    }
+                //case EnvExpr.VariableWrite writeExpression:
+                //    // the type of the variable is the type of the expression
+                //    // i.e. this is not about how the variable is stored but simply its most refined type
+                //    //  the write occurs in a new environment
+                //    {
+                //        TypedEnvironment newEnvironment = new TypedEnvironment(environment);
+                //        TExpr? variableValue = AnalyseExpressionType(newEnvironment, writeExpression.Value);
+                //        if (variableValue is null)
+                //            return null;
+                //        TypedVariable typedVar = newEnvironment.AddVariable(writeExpression.Variable, variableValue.Type);
+                //        // now the type of the variable value is known -> we can now evaluate the evaluate expression
+                //        TExpr? evaluateExpression = AnalyseExpressionType(newEnvironment, writeExpression.Evaluate);
+                //        return new TExpr.VariableWrite(newEnvironment, typedVar, variableValue, evaluateExpression, evaluateExpression.Type);
+                //    }
                 case EnvExpr.Conditional conditionalExpression:
                     // for each conditional branch, the environment gains a refinement (in a new environment)
                     {
@@ -106,7 +106,6 @@ namespace Plover.TypeAnalysis
                         return new TExpr.Conditional(environment, condition, ifTrue, ifFalse, type);
                     }
                 case EnvExpr.FunctionCall callExpression:
-                case EnvExpr.OperatorFunction:
                 default:
                     throw new Exception("Expression type not supported.");
             }

@@ -13,6 +13,33 @@ namespace Plover.Parsing
 {
     internal class ParserTest
     {
+        public static (Expr?, Scanner) ParseExpressionAndPrintOnError(string text)
+        {
+            (List<Token>? tokens, Scanner scanner) = ScannerTest.ScanAndPrintOnError(text);
+            if (tokens is null)
+            {
+                Console.WriteLine("\nCannot parse text.");
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            Parser parser = new Parser(scanner, tokens);
+            Expr? expression = parser.ParseExpression();
+            if (expression is null || parser.Errors.Count > 0)
+            {
+                Console.WriteLine("\nParsing errors:");
+                foreach (ParseError error in parser.Errors)
+                {
+                    Console.WriteLine(error.VisualMessage(scanner.Lines));
+                }
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            return (expression, scanner);
+        }
+
+
         public static void ExprReplTest()
         {
             Console.WriteLine("");
@@ -28,39 +55,41 @@ namespace Plover.Parsing
                 {
                     return;
                 }
-                Scanner scanner = new Scanner(text);
-                List<Token> tokens = scanner.ScanTokens();
-                List<ScanError> scanErrors = scanner.Errors;
-
-                if(scanErrors.Count > 0)
+                (Expr? expression, _) = ParseExpressionAndPrintOnError(text);
+                if(expression is null)
                 {
-                    Console.WriteLine("\nScanning errors:");
-                    foreach (ScanError error in scanErrors)
-                    {
-                        Console.WriteLine(error.VisualMessage(scanner.Lines));
-                    }
-                    Console.WriteLine("\nCannot parse text.");
-                    Console.WriteLine("");
                     continue;
                 }
-
-                Parser parser = new Parser(scanner, tokens);
-                Expr? expression = parser.ParseExpression();
-                if(expression is null || parser.Errors.Count > 0)
-                {
-                    Console.WriteLine("\nParsing errors:");
-                    foreach (ParseError error in parser.Errors)
-                    {
-                        Console.WriteLine(error.VisualMessage(scanner.Lines));
-                    }
-                    Console.WriteLine("");
-                    continue;
-                }
-
                 Console.WriteLine("Expression:");
                 Console.WriteLine(expression.ToString());
                 Console.WriteLine("");
             }
+        }
+
+        public static (TypeExpr?, Scanner) ParseTypeExpressionAndPrintOnError(string text)
+        {
+            (List<Token>? tokens, Scanner scanner) = ScannerTest.ScanAndPrintOnError(text);
+            if (tokens is null)
+            {
+                Console.WriteLine("\nCannot parse text.");
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            Parser parser = new Parser(scanner, tokens);
+            TypeExpr? expression = parser.ParseTypeExpression();
+            if (expression is null || parser.Errors.Count > 0)
+            {
+                Console.WriteLine("\nParsing errors:");
+                foreach (ParseError error in parser.Errors)
+                {
+                    Console.WriteLine(error.VisualMessage(scanner.Lines));
+                }
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            return (expression, scanner);
         }
 
         public static void TypeExprReplTest()
@@ -78,40 +107,41 @@ namespace Plover.Parsing
                 {
                     return;
                 }
-                // nexttext is null or nexttext is ""
-                Scanner scanner = new Scanner(text);
-                List<Token> tokens = scanner.ScanTokens();
-                List<ScanError> scanErrors = scanner.Errors;
-
-                if (scanErrors.Count > 0)
+                (TypeExpr? expression, _) = ParseTypeExpressionAndPrintOnError(text);
+                if (expression is null)
                 {
-                    Console.WriteLine("\nScanning errors:");
-                    foreach (ScanError error in scanErrors)
-                    {
-                        Console.WriteLine(error.VisualMessage(scanner.Lines));
-                    }
-                    Console.WriteLine("\nCannot parse text.");
-                    Console.WriteLine("");
                     continue;
                 }
-
-                Parser parser = new Parser(scanner, tokens);
-                TypeExpr? expression = parser.ParseTypeExpression();
-                if (expression is null || parser.Errors.Count > 0)
-                {
-                    Console.WriteLine("\nParsing errors:");
-                    foreach (ParseError error in parser.Errors)
-                    {
-                        Console.WriteLine(error.VisualMessage(scanner.Lines));
-                    }
-                    Console.WriteLine("");
-                    continue;
-                }
-
-                Console.WriteLine("Type expression:");
+                Console.WriteLine("Type Expression:");
                 Console.WriteLine(expression.ToString());
                 Console.WriteLine("");
             }
+        }
+
+        public static (Stmt?, Scanner) ParseStatementAndPrintOnError(string text)
+        {
+            (List<Token>? tokens, Scanner scanner) = ScannerTest.ScanAndPrintOnError(text);
+            if (tokens is null)
+            {
+                Console.WriteLine("\nCannot parse text.");
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            Parser parser = new Parser(scanner, tokens);
+            Stmt? expression = parser.ParseStatement();
+            if (expression is null || parser.Errors.Count > 0)
+            {
+                Console.WriteLine("\nParsing errors:");
+                foreach (ParseError error in parser.Errors)
+                {
+                    Console.WriteLine(error.VisualMessage(scanner.Lines));
+                }
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            return (expression, scanner);
         }
 
         public static void StmtReplTest()
@@ -129,38 +159,66 @@ namespace Plover.Parsing
                 {
                     return;
                 }
-                // nexttext is null or nexttext is ""
-                Scanner scanner = new Scanner(text);
-                List<Token> tokens = scanner.ScanTokens();
-                List<ScanError> scanErrors = scanner.Errors;
-
-                if (scanErrors.Count > 0)
+                (Stmt? expression, _) = ParseStatementAndPrintOnError(text);
+                if (expression is null)
                 {
-                    Console.WriteLine("\nScanning errors:");
-                    foreach (ScanError error in scanErrors)
-                    {
-                        Console.WriteLine(error.VisualMessage(scanner.Lines));
-                    }
-                    Console.WriteLine("\nCannot parse text.");
-                    Console.WriteLine("");
                     continue;
                 }
-
-                Parser parser = new Parser(scanner, tokens);
-                Stmt? expression = parser.ParseStatement();
-                if (expression is null || parser.Errors.Count > 0)
-                {
-                    Console.WriteLine("\nParsing errors:");
-                    foreach (ParseError error in parser.Errors)
-                    {
-                        Console.WriteLine(error.VisualMessage(scanner.Lines));
-                    }
-                    Console.WriteLine("");
-                    continue;
-                }
-
                 Console.WriteLine("Statement:");
                 Console.WriteLine(expression.ToString());
+                Console.WriteLine("");
+            }
+        }
+
+        public static (List<Decl>?, Scanner) ParseDeclarationsAndPrintOnError(string text)
+        {
+            (List<Token>? tokens, Scanner scanner) = ScannerTest.ScanAndPrintOnError(text);
+            if (tokens is null)
+            {
+                Console.WriteLine("\nCannot parse text.");
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            Parser parser = new Parser(scanner, tokens);
+            List<Decl>? expression = parser.ParseDeclarations();
+            if (expression is null || parser.Errors.Count > 0)
+            {
+                Console.WriteLine("\nParsing errors:");
+                foreach (ParseError error in parser.Errors)
+                {
+                    Console.WriteLine(error.VisualMessage(scanner.Lines));
+                }
+                Console.WriteLine("");
+                return (null, scanner);
+            }
+
+            return (expression, scanner);
+        }
+
+        public static void DeclReplTest()
+        {
+            Console.WriteLine("");
+            Console.WriteLine("Welcome to the declaration parser repl.");
+            Console.WriteLine("Enter in the text of one or more declarations to see parse results.");
+            Console.WriteLine("Enter 'quit' to quit.");
+            Console.WriteLine("Enter 'menu' to return to the menu.");
+
+            while (true)
+            {
+                string? text = Repl.GetUserInput();
+                if (text is null)
+                {
+                    return;
+                }
+                (List<Decl>? expression, _) = ParseDeclarationsAndPrintOnError(text);
+                if (expression is null)
+                {
+                    continue;
+                }
+
+                Console.WriteLine("Declarations:");
+                Console.WriteLine(string.Join("\n\n", (from decl in expression select decl.ToString())));
                 Console.WriteLine("");
             }
         }

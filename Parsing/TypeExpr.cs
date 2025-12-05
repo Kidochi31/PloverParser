@@ -35,12 +35,12 @@ namespace Plover.Parsing
             public override string ToString() => $"({Left}) | ({Right})";
         }
 
-        public record class Refinement(TypeExpr Type, Expr RefinementExpr, Token lastBracket) : TypeExpr
+        public record class Refinement(TypeExpr BaseType, Expr RefinementExpr, Token lastBracket) : TypeExpr
         {
-            public override Token GetFirstToken() => Type.GetFirstToken();
+            public override Token GetFirstToken() => BaseType.GetFirstToken();
 
             public override Token GetLastToken() => lastBracket;
-            public override string ToString() => $"({Type})[{RefinementExpr}]";
+            public override string ToString() => $"({BaseType})[{RefinementExpr}]";
         }
 
         public record class NamedType(IdentifierToken Token) : TypeExpr
