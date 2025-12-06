@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Plover.Environment;
+using Plover.Parsing;
 using Plover.Scanning;
 
 namespace Plover.EnvironmentAnalysis
@@ -21,7 +22,7 @@ namespace Plover.EnvironmentAnalysis
         // Using Bindings
 
 
-        public record class FunctionCall(EnvExpr Function, List<EnvExpr> Arguments): EnvExpr()
+        public record class FunctionCall(EnvExpr Function, List<EnvExpr> Arguments) : EnvExpr()
         {
             public override string ToString() => $"call ({Function})({string.Join(", ", from arg in Arguments select arg.ToString())})";
         }

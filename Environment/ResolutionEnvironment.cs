@@ -1,4 +1,6 @@
-﻿using Plover.Scanning;
+﻿using Plover.EnvironmentAnalysis;
+using Plover.Parsing;
+using Plover.Scanning;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +17,7 @@ namespace Plover.Environment
         private Dictionary<string, Variable> Variables = new();
         private Dictionary<string, TypeVariable> TypeVariables = new();
         private int EnvironmentNumber = EnvironmentCounter++;
+        bool Closed = false;
 
         public static ResolutionEnvironment CreateParentEnvironment()
         {
@@ -24,6 +27,15 @@ namespace Plover.Environment
         private ResolutionEnvironment()
         {
             ParentEnvironment = null;
+
+            // declare default types
+            // declare default types
+            List<string> predeclaredTypes = new List<string> { "int", "bool", "char", "float", "any"};
+            foreach (string predeclaredType in predeclaredTypes)
+            {
+                TypeVariables[predeclaredType] = new TypeVariable(predeclaredType);
+            }
+
             // declare default operator functions
             // +, -, *, /, not, xor, ==, !=, <, <=, >, >=, &, |, ^, <<, >>, ~
             List<TokenType> prefixOperators = new List<TokenType> {TokenType.PLUS, TokenType.MINUS, TokenType.TILDE, TokenType.NOT };
@@ -36,27 +48,25 @@ namespace Plover.Environment
             {
                 string varName = GetOperatorFunctionName(op, prefix: true);
                 Variable opVar = new Variable(varName, null);
+                opVar.DeclarationType = new EnvTypeExpr.Function([new EnvTypeExpr.NamedType(TypeVariables["any"])], new EnvTypeExpr.NamedType(TypeVariables["any"]));
                 Variables[varName] = opVar;
             }
             foreach (TokenType op in binaryOperators)
             {
                 string varName = GetOperatorFunctionName(op, binary: true);
                 Variable opVar = new Variable(varName, null);
+                opVar.DeclarationType = new EnvTypeExpr.Function([new EnvTypeExpr.NamedType(TypeVariables["any"]), new EnvTypeExpr.NamedType(TypeVariables["any"])], new EnvTypeExpr.NamedType(TypeVariables["any"]));
                 Variables[varName] = opVar;
             }
 
-            // declare default types
-            List<string> predeclaredTypes = new List<string> {"int", "bool", "char", "string"};
-            foreach(string predeclaredType in predeclaredTypes)
-            {
-                TypeVariables[predeclaredType] = new TypeVariable(predeclaredType);
-            }
+            
         }
 
         public ResolutionEnvironment(ResolutionEnvironment environment)
         {
             ParentEnvironment = environment;
         }
+
 
         public string GetEnvironmentName() => $"env{EnvironmentNumber}";
 
@@ -137,6 +147,26 @@ namespace Plover.Environment
             TypeVariable newVariable = new TypeVariable(name);
             TypeVariables[name] = newVariable;
             return newVariable;
+        }
+
+        public List<Variable> CloseEnvironment()
+        {
+            Closed = true;
+            return GetAllVariablesWithUnassignedTypes();
+        }
+
+        List<Variable> GetAllVariablesWithUnassignedTypes()
+        {
+            // check that all variables have a declaration type
+            List<Variable> UnassignedVariables = new();
+            foreach (Variable v in Variables.Values)
+            {
+                if(v.DeclarationType is null)
+                {
+                    UnassignedVariables.Add(v);
+                }
+            }
+            return UnassignedVariables;
         }
     }
 }

@@ -19,11 +19,14 @@ namespace Plover.EnvironmentAnalysis
             ResolutionEnvironment environment = ResolutionEnvironment.CreateParentEnvironment();
             try
             {
-                return AnalyseDeclaration(environment, declaration);
+                var expr = AnalyseDeclaration(environment, declaration);
+                CloseEnvironment(environment);
+                return expr;
             }
             catch (Exception e)
             {
-                Console.WriteLine($"AnalysisExpressionError: {e}");
+                CloseEnvironment(environment);
+                Console.WriteLine($"AnalyseDeclarationError: {e}");
                 return null;
             }
         }
@@ -33,7 +36,7 @@ namespace Plover.EnvironmentAnalysis
             {
                 case Decl.Function functionDeclaration:
                     {
-                        Variable? functionName = DeclareVariableForceDeclareOnError(environment, functionDeclaration.Name.IdentifierName, functionDeclaration.Name);
+                        Variable functionName = DeclareVariableForceDeclareOnError(environment, functionDeclaration.Name.IdentifierName, functionDeclaration.Name);
                         // create a new environment to put function parameters and body in
                         // this is a function environment
                         ResolutionEnvironment bodyEnvironment = new ResolutionEnvironment(environment);
@@ -49,7 +52,9 @@ namespace Plover.EnvironmentAnalysis
                         List<EnvDecl.FnParam> parametersWithTypes = new();
                         foreach((Variable v, TypeExpr t) in parameters)
                         {
-                            parametersWithTypes.Add(new EnvDecl.FnParam(v, AnalyseTypeExpression(bodyEnvironment, t)));
+                            EnvTypeExpr typeExpr = AnalyseTypeExpression(bodyEnvironment, t);
+                            parametersWithTypes.Add(new EnvDecl.FnParam(v, typeExpr));
+                            v.DeclarationType = typeExpr;
                         }
 
                         // analyse the return type if there is one
@@ -57,6 +62,10 @@ namespace Plover.EnvironmentAnalysis
 
                         // analyse the statements as well
                         EnvStmt body = AnalyseStatement(bodyEnvironment, functionDeclaration.Body);
+
+                        // close environment
+                        functionName.DeclarationType = new EnvTypeExpr.Function((from p in parametersWithTypes select p.Type).ToList(), returnType);
+                        CloseEnvironment(bodyEnvironment);
 
                         return new EnvDecl.Function(functionName, parametersWithTypes, returnType, body);
                     }

@@ -14,16 +14,19 @@ namespace Plover.EnvironmentAnalysis
 {
     internal partial class EnvironmentAnalyser
     {
-        public EnvTypeExpr? AnalyseTypeExpressionWithoutEnvironment(TypeExpr expression)
+        public EnvTypeExpr? AnalyseTypeExpressionWithoutEnvironment(TypeExpr statement)
         {
             ResolutionEnvironment environment = ResolutionEnvironment.CreateParentEnvironment();
             try
             {
-                return AnalyseTypeExpression(environment, expression);
+                var expr = AnalyseTypeExpression(environment, statement);
+                CloseEnvironment(environment);
+                return expr;
             }
             catch (Exception e)
             {
-                Console.WriteLine($"AnalysisExpressionError: {e}");
+                CloseEnvironment(environment);
+                Console.WriteLine($"AnalyseTypeExpressionError: {e}");
                 return null;
             }
         }

@@ -18,10 +18,13 @@ namespace Plover.EnvironmentAnalysis
             ResolutionEnvironment environment = ResolutionEnvironment.CreateParentEnvironment();
             try
             {
-                return AnalyseExpression(environment, expression);
+                var expr = AnalyseExpression(environment, expression);
+                CloseEnvironment(environment);
+                return expr;
             }
             catch (Exception e)
             {
+                CloseEnvironment(environment);
                 Console.WriteLine($"AnalysisExpressionError: {e}");
                 return null;
             }
@@ -63,10 +66,16 @@ namespace Plover.EnvironmentAnalysis
                         // then go in reverse to create the ands
                         Stack<TokenType> operators = new();
                         Stack<(Variable variable, EnvExpr binding)> bindings = new();
-                        bindings.Push((naryEnvironment.AddAnonymousVariable(), AnalyseExpression(naryEnvironment, naryExpression.Start)));
+                        Variable firstVariable = naryEnvironment.AddAnonymousVariable();
+                        EnvExpr firstExpression = AnalyseExpression(naryEnvironment, naryExpression.Start);
+                        firstVariable.DeclarationType = new EnvTypeExpr.TypeOf(firstExpression);
+                        bindings.Push((firstVariable, firstExpression));
                         foreach ((Token op, Expr expr) in naryExpression.Operations)
                         {
-                            bindings.Push((naryEnvironment.AddAnonymousVariable(), AnalyseExpression(naryEnvironment, expr)));
+                            Variable v = naryEnvironment.AddAnonymousVariable();
+                            EnvExpr e = AnalyseExpression(naryEnvironment, expr);
+                            v.DeclarationType = new EnvTypeExpr.TypeOf(e);
+                            bindings.Push((v, e));
                             operators.Push(op.Type);
                         }
 
@@ -83,6 +92,9 @@ namespace Plover.EnvironmentAnalysis
                         }
                         // there is still a va, bi left to bind
                         currentExpr = new EnvExpr.UsingBindings([(va, bi)], currentExpr);
+
+                        // close the nary Environment
+                        CloseEnvironment(naryEnvironment);
                         return currentExpr;
                     }
                 case Expr.Grouping groupExpression: // Returns the underlying expression
@@ -100,9 +112,13 @@ namespace Plover.EnvironmentAnalysis
                             Variable variable = DeclareVariableForceDeclareOnError(usingEnvironment, identifier.Token.IdentifierName, identifier.Token);
                             EnvExpr value = AnalyseExpression(usingEnvironment, expr);
                             bindings.Add((variable, value));
+                            variable.DeclarationType = new EnvTypeExpr.TypeOf(value);
                         }
                         // all bindings added, now evaluate the expression
                         EnvExpr evaluate = AnalyseExpression(usingEnvironment, usingExpression.Expr);
+
+                        // close resolution environment
+                        CloseEnvironment(usingEnvironment);
                         return new EnvExpr.UsingBindings(bindings, evaluate);
                     }
                 case Expr.FunctionCall functionCall: // Returns the function call

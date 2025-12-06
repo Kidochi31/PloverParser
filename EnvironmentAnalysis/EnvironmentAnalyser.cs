@@ -87,6 +87,21 @@ namespace Plover.EnvironmentAnalysis
             return variable;
         }
 
+        void CloseEnvironment(ResolutionEnvironment environment)
+        {
+            var untypedVariables = environment.CloseEnvironment();
+            foreach (Variable untypedVariable in untypedVariables)
+            {
+                if (untypedVariable.DeclarationToken is not null)
+                {
+                    LogError(untypedVariable.DeclarationToken, $"Variable {untypedVariable.Name} is untyped.");
+                }
+                else
+                {
+                    throw new Exception($"Anonymous variable {untypedVariable.Name} is untyped.");
+                }
+            }
+        }
 
         void LogError(Expr expression, string message, List<ErrorPointer>? otherPointers = null)
         {

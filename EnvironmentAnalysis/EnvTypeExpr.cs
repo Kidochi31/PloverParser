@@ -34,5 +34,15 @@ namespace Plover.EnvironmentAnalysis
         {
             public override string ToString() => $"{Variable}";
         }
+
+        public record class TypeOf(EnvExpr Expression) : EnvTypeExpr
+        {
+            public override string ToString() => $"typeof({Expression})";
+        }
+
+        public record class Function(List<EnvTypeExpr> Input, EnvTypeExpr? Output) : EnvTypeExpr
+        {
+            public override string ToString() => $"fn({string.Join(", ", from t in Input select t.ToString())}) -> {Output?.ToString() ?? "unit"}";
+        }
     }
 }

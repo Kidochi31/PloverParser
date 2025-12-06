@@ -19,14 +19,18 @@ namespace Plover.EnvironmentAnalysis
             ResolutionEnvironment environment = ResolutionEnvironment.CreateParentEnvironment();
             try
             {
-                return AnalyseStatement(environment, statement);
+                var expr = AnalyseStatement(environment, statement);
+                CloseEnvironment(environment);
+                return expr;
             }
             catch (Exception e)
             {
-                Console.WriteLine($"AnalysisExpressionError: {e}");
+                CloseEnvironment(environment);
+                Console.WriteLine($"AnalyseStatementError: {e}");
                 return null;
             }
         }
+
         private EnvStmt AnalyseStatement(ResolutionEnvironment environment, Stmt statement)
         {
             switch (statement)
@@ -41,7 +45,8 @@ namespace Plover.EnvironmentAnalysis
                     {
                         if(assignmentStmt.Target is Expr.Identifier identifier)
                         {
-                            Variable? variable = GetVariableForceDeclareOnError(environment, identifier.Token.IdentifierName, identifier.Token);
+                            Variable variable = GetVariableForceDeclareOnError(environment, identifier.Token.IdentifierName, identifier.Token);
+                            // don't mark variable as read
                             EnvExpr value = AnalyseExpression(environment, assignmentStmt.Value);
                             return new EnvStmt.Assignment(variable, value);
                         }
@@ -66,6 +71,8 @@ namespace Plover.EnvironmentAnalysis
                         ResolutionEnvironment bodyEnvironment = new ResolutionEnvironment(environment);
                         // then analyse all statements in order
                         List<EnvStmt> statements = (from Stmt in blockStmt.Body select AnalyseStatement(bodyEnvironment, Stmt)).ToList();
+                        // close environment
+                        CloseEnvironment(bodyEnvironment);
                         return new EnvStmt.Block(statements);
                     }
                 case Stmt.LocVarDec locVarDec:
@@ -74,6 +81,7 @@ namespace Plover.EnvironmentAnalysis
                         // 1. variable is declared (in environment)
                         // 2. variable is assigned (via statement) if necessary
                         Variable? varName = DeclareVariableForceDeclareOnError(environment, locVarDec.Identifier.IdentifierName, locVarDec.Identifier);
+                        varName.DeclarationType = AnalyseTypeExpression(environment, locVarDec.Type);
                         // declaration complete
                         // if there is no assignment -> return an empty block
                         if(locVarDec.Value is null)
